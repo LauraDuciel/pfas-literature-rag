@@ -45,6 +45,20 @@ If the model is missing:
 docker exec -it ollama ollama pull qwen2.5:3b
 ```
 
+## Typical workflow
+
+For a first local run:
+
+```bash
+uv run pfas-collect "PFAS NMR analytical chemistry" --max-results 10 --dry-run
+uv run pfas-collect "PFAS NMR analytical chemistry" --max-results 10
+uv run pfas-ingest
+uv run pfas-query "What analytical methods are used for PFAS detection?"
+```
+
+`pfas-query` uses the local Ollama model, so response time depends on the
+machine and the selected model.
+
 ## Index local PDFs
 
 Place PDFs in:
@@ -86,7 +100,15 @@ Available endpoints:
 - `POST /search`
 - `POST /answer`
 
-Example API request:
+Example search request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "PFAS extraction methods", "top_k": 5}'
+```
+
+Example answer request:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/answer \
@@ -113,11 +135,13 @@ Download available PDFs:
 uv run pfas-collect "PFAS NMR analytical chemistry" --max-results 10
 ```
 
-Then rebuild the index:
+Then update the index:
 
 ```bash
 uv run pfas-ingest
 ```
+
+Only new chunks are embedded and added to the existing index.
 
 ## Configuration
 
