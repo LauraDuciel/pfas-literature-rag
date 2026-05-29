@@ -26,9 +26,9 @@ dev = [
 ]
 
 [project.scripts]
-pfas-collect = "pfas_lit_rag.cli.collect:app"
-pfas-ingest = "pfas_lit_rag.cli.ingest:app"
-pfas-query = "pfas_lit_rag.cli.query:app"
+pfas-collect = "pfas_lit_rag.cli.collect:run"
+pfas-ingest = "pfas_lit_rag.cli.ingest:run"
+pfas-query = "pfas_lit_rag.cli.query:run"
 pfas-api = "pfas_lit_rag.api:run"
 
 [build-system]
