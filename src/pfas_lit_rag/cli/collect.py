@@ -23,8 +23,14 @@ def main(
             console.print(f"  {record.pdf_url}")
         return
 
-    downloaded = download_records(records, settings)
-    console.print(f"Downloaded {len(downloaded)} PDFs to {settings.resolved_raw_pdf_dir}")
+    result = download_records(records, settings)
+    console.print(f"Downloaded {len(result.downloaded)} PDFs to {settings.resolved_raw_pdf_dir}")
+    if result.failed:
+        console.print(f"Skipped {len(result.failed)} PDFs that could not be downloaded:")
+        for failure in result.failed:
+            console.print(f"- {failure.title}")
+            console.print(f"  {failure.url}")
+            console.print(f"  {failure.reason}")
 
 
 def run() -> None:

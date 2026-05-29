@@ -3,17 +3,30 @@ import re
 from pathlib import Path
 
 import httpx
+from pydantic import BaseModel
 
 from pfas_lit_rag.config import Settings
 from pfas_lit_rag.schemas import LiteratureRecord
 
 
-def download_records(records: list[LiteratureRecord], settings: Settings) -> list[LiteratureRecord]:
+class DownloadFailure(BaseModel):
+    title: str
+    url: str
+    reason: str
+
+
+class DownloadResult(BaseModel):
+    downloaded: list[LiteratureRecord]
+    failed: list[DownloadFailure]
+
+
+def download_records(records: list[LiteratureRecord], settings: Settings) -> DownloadResult:
     settings.resolved_raw_pdf_dir.mkdir(parents=True, exist_ok=True)
     settings.resolved_metadata_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = settings.resolved_metadata_dir / "literature_manifest.jsonl"
 
     downloaded: list[LiteratureRecord] = []
+    failed: list[DownloadFailure] = []
     with httpx.Client(
         timeout=settings.request_timeout_seconds,
         follow_redirects=True,
@@ -22,7 +35,17 @@ def download_records(records: list[LiteratureRecord], settings: Settings) -> lis
         for record in records:
             target_path = _target_path(record, settings.resolved_raw_pdf_dir)
             if not target_path.exists():
-                _download_pdf(client, str(record.pdf_url), target_path)
+                try:
+                    _download_pdf(client, str(record.pdf_url), target_path)
+                except (httpx.HTTPError, ValueError) as exc:
+                    failed.append(
+                        DownloadFailure(
+                            title=record.title,
+                            url=str(record.pdf_url),
+                            reason=str(exc),
+                        )
+                    )
+                    continue
             updated = record.model_copy(update={"downloaded_path": str(target_path)})
             downloaded.append(updated)
 
@@ -30,7 +53,7 @@ def download_records(records: list[LiteratureRecord], settings: Settings) -> lis
         for record in downloaded:
             handle.write(json.dumps(record.model_dump(mode="json"), ensure_ascii=False) + "\n")
 
-    return downloaded
+    return DownloadResult(downloaded=downloaded, failed=failed)
 
 
 def _download_pdf(client: httpx.Client, url: str, target_path: Path) -> None:
