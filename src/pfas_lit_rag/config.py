@@ -16,9 +16,11 @@ class Settings(BaseSettings):
 
     chunk_size: int = 900
     chunk_overlap: int = 150
-    retrieval_k: int = 5
+    retrieval_k: int = 4
+    context_chars_per_chunk: int = 1200
+    ollama_num_predict: int = 350
 
-    request_timeout_seconds: float = 60.0
+    request_timeout_seconds: float = 900.0
     collector_user_agent: str = "pfas-lit-rag/0.1"
 
     model_config = SettingsConfigDict(env_prefix="PFAS_RAG_", env_file=".env", extra="ignore")

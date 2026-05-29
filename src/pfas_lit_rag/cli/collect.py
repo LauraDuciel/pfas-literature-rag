@@ -24,7 +24,10 @@ def main(
         return
 
     result = download_records(records, settings)
-    console.print(f"Downloaded {len(result.downloaded)} PDFs to {settings.resolved_raw_pdf_dir}")
+    console.print(
+        f"Downloaded {len(result.downloaded)} new PDFs "
+        f"({len(result.existing)} already present) to {settings.resolved_raw_pdf_dir}"
+    )
     if result.failed:
         console.print(f"Skipped {len(result.failed)} PDFs that could not be downloaded:")
         for failure in result.failed:

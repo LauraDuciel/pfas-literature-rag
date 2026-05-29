@@ -9,8 +9,12 @@ console = Console()
 
 def main() -> None:
     settings = get_settings()
-    chunks = build_index(settings)
-    console.print(f"Indexed {len(chunks)} chunks in {settings.resolved_index_dir}")
+    result = build_index(settings)
+    console.print(
+        f"Indexed {result.new_chunks} new chunks "
+        f"({result.existing_chunks} already present, {result.total_chunks} scanned) "
+        f"in {settings.resolved_index_dir}"
+    )
 
 
 def run() -> None:

@@ -14,9 +14,20 @@ def answer_question(question: str, settings: Settings, top_k: int | None = None)
             retrieved=[],
         )
     answer = OllamaClient(settings).answer(question, results)
+    citations = [result.citation for result in results]
+    answer = _ensure_sources_section(answer, citations)
     return AnswerResponse(
         question=question,
         answer=answer,
-        citations=[result.citation for result in results],
+        citations=citations,
         retrieved=results,
     )
+
+
+def _ensure_sources_section(answer: str, citations: list[str]) -> str:
+    if not citations or "Sources:" in answer:
+        return answer
+    sources = "\n".join(
+        f"[{index}] {citation}" for index, citation in enumerate(citations, start=1)
+    )
+    return f"{answer.strip()}\n\nSources:\n{sources}"

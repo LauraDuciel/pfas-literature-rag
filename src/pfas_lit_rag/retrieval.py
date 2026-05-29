@@ -11,16 +11,24 @@ def search_index(query: str, settings: Settings, top_k: int | None = None) -> li
     return store.search(query_embedding, top_k or settings.retrieval_k)
 
 
-def format_context(results: list[SearchResult]) -> str:
+def format_context(results: list[SearchResult], max_chars_per_chunk: int | None = None) -> str:
     blocks = []
     for index, result in enumerate(results, start=1):
+        text = _truncate_text(result.chunk.text, max_chars_per_chunk)
         blocks.append(
             "\n".join(
                 [
                     f"[{index}] {result.citation}",
                     f"Score: {result.score:.3f}",
-                    result.chunk.text,
+                    text,
                 ]
             )
         )
     return "\n\n".join(blocks)
+
+
+def _truncate_text(text: str, max_chars: int | None) -> str:
+    if max_chars is None or len(text) <= max_chars:
+        return text
+    truncated = text[:max_chars].rsplit(" ", 1)[0].strip()
+    return f"{truncated} [...]"

@@ -60,7 +60,8 @@ uv run pfas-ingest
 ```
 
 The FAISS index is written to `data/index/`. Raw PDFs and built indexes are
-not tracked by git.
+not tracked by git. Re-running the command appends only new chunks; chunks that
+are already present in the index are skipped.
 
 ## Ask questions
 
@@ -75,6 +76,8 @@ Or start the API:
 ```bash
 uv run pfas-api
 ```
+
+Keep that process running while sending `curl` requests from another terminal.
 
 Available endpoints:
 
@@ -95,6 +98,8 @@ curl -X POST http://127.0.0.1:8000/answer \
 
 The collector searches open scholarly metadata and downloads PDF links exposed
 by those records. It writes a manifest to `data/metadata/literature_manifest.jsonl`.
+If a matching PDF file already exists locally, it is counted as already present
+and is not downloaded again.
 
 Preview results without downloading:
 
@@ -122,7 +127,10 @@ Settings can be overridden with environment variables:
 PFAS_RAG_OLLAMA_BASE_URL=http://localhost:11434
 PFAS_RAG_OLLAMA_MODEL=qwen2.5:3b
 PFAS_RAG_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
-PFAS_RAG_RETRIEVAL_K=5
+PFAS_RAG_RETRIEVAL_K=4
+PFAS_RAG_CONTEXT_CHARS_PER_CHUNK=1200
+PFAS_RAG_OLLAMA_NUM_PREDICT=350
+PFAS_RAG_REQUEST_TIMEOUT_SECONDS=900
 ```
 
 The default embedding backend is `fastembed`, using

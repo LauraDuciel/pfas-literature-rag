@@ -26,10 +26,10 @@ def health() -> dict:
 @app.post("/ingest")
 def ingest() -> dict:
     try:
-        chunks = build_index(get_settings())
+        result = build_index(get_settings())
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"chunks_indexed": len(chunks)}
+    return result.model_dump()
 
 
 @app.post("/search", response_model=SearchResponse)

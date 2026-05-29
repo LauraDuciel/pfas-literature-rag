@@ -19,7 +19,7 @@ class OllamaClient:
         return response.json()
 
     def answer(self, question: str, results: list[SearchResult]) -> str:
-        context = format_context(results)
+        context = format_context(results, self.settings.context_chars_per_chunk)
         prompt = _build_prompt(question=question, context=context)
         response = self.client.post(
             "/api/generate",
@@ -31,6 +31,7 @@ class OllamaClient:
                     "temperature": 0.1,
                     "top_p": 0.9,
                     "num_ctx": 4096,
+                    "num_predict": self.settings.ollama_num_predict,
                 },
             },
         )
