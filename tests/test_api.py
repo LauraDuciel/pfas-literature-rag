@@ -11,4 +11,4 @@ def test_health_endpoint_reports_service_status() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
-    assert payload["model"] == "qwen2.5:0.5b"
+    assert payload["model"] == "qwen2.5:3b"

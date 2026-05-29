@@ -1,7 +1,7 @@
 [project]
 name = "pfas-lit-rag"
 version = "0.1.0"
-description = "Local RAG assistant for PFAS and scientific technical literature."
+description = "Local RAG workflow for PFAS and scientific technical literature."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

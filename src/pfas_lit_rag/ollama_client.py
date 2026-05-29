@@ -40,7 +40,7 @@ class OllamaClient:
 
 
 def _build_prompt(question: str, context: str) -> str:
-    return f"""You are a careful scientific literature assistant.
+    return f"""You support careful scientific literature review.
 Use only the retrieved passages below. If the passages do not support an answer,
 say that the local corpus does not contain enough evidence.
 
