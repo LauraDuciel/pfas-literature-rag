@@ -174,6 +174,45 @@ Run linting:
 uv run --extra dev ruff check .
 ```
 
+## Limitations
+
+This workflow is intentionally tuned for local use on a personal machine. That
+keeps the setup simple and private, but it also means there are practical limits:
+
+- `qwen2.5:3b` can be slow on CPU-only hardware, especially when several long
+  passages are sent to Ollama.
+- Small local language models may miss nuance, over-compress details, or produce
+  awkward summaries. Citations help with checking, but they do not make the
+  generated answer automatically correct.
+- PDF text extraction depends on the PDF structure. Scanned PDFs, tables,
+  two-column layouts, chemical notation, and supplementary material may extract
+  poorly without OCR or layout-aware parsing.
+- Retrieval is based on dense embeddings and simple top-k ranking. It does not
+  yet use hybrid lexical/vector search, reranking, or query expansion.
+- The OpenAlex collector depends on available open metadata and PDF links. Some
+  links are stale, blocked, not actual PDFs, or only weakly related to the query.
+- Deduplication is based on deterministic local filenames and chunk ids. It will
+  catch common repeated downloads, but it is not a full DOI/content-hash
+  deduplication system yet.
+- The index is local and single-user. There is no authentication, background job
+  queue, or concurrent write protection.
+
+## Possible improvements
+
+Useful next steps, without changing the project into a heavy platform, would be:
+
+- add DOI and file-content hashing for stronger duplicate detection;
+- add OCR for scanned PDFs and better handling of tables or two-column layouts;
+- add hybrid retrieval with BM25 plus vector search;
+- add a lightweight reranker for the top retrieved passages;
+- store document-level metadata more explicitly, including DOI, source, license,
+  and collection query;
+- add an evaluation notebook with a small set of fixed questions and expected
+  cited passages;
+- expose separate retrieval-only and answer-generation timings in the CLI/API;
+- support swapping between `qwen2.5:3b` and a larger local model when hardware
+  allows it.
+
 ## Scope
 
 The project supports local exploration of scientific PDFs. It does not replace
