@@ -59,7 +59,9 @@ uv run pfas-query "What analytical methods are used for PFAS detection?"
 ```
 
 `pfas-query` uses the local Ollama model, so response time depends on the
-machine and the selected model.
+machine and the selected model. Answer quality depends strongly on the local
+corpus: a larger set of relevant, well-extracted PDFs gives the retriever better
+evidence to work with.
 
 ## Index local PDFs
 
@@ -165,8 +167,13 @@ The default embedding backend is `fastembed`, using
 ## Demonstration notebook
 
 A small executed notebook is available at `notebooks/pfas_rag_demo.ipynb`. It
-shows the local corpus state, document manifest, hybrid retrieval results,
-retrieved context, and one Ollama-generated answer with cited sources.
+is intended as a demonstrator of the workflow: local corpus state, document
+manifest, hybrid retrieval results, retrieved context, and one Ollama-generated
+answer with cited sources.
+
+The notebook is not a benchmark of answer quality. The usefulness of the answers
+depends mainly on the local PDF collection: the more complete and relevant the
+indexed corpus is, the more likely retrieval is to surface the right passages.
 
 Run it again with:
 
@@ -207,6 +214,8 @@ keeps the setup simple and private, but it also means there are practical limits
 - Small local language models may miss nuance, over-compress details, or produce
   awkward summaries. Citations help with checking, but they do not make the
   generated answer automatically correct.
+- The system can only answer from what has been collected and indexed locally.
+  Sparse or biased document coverage will lead to sparse or biased answers.
 - PDF text extraction depends on the PDF structure. Scanned PDFs, tables,
   two-column layouts, chemical notation, and supplementary material may extract
   poorly without OCR or layout-aware parsing.
@@ -214,9 +223,9 @@ keeps the setup simple and private, but it also means there are practical limits
   not yet use reranking, query expansion, or domain-specific synonym handling.
 - The OpenAlex collector depends on available open metadata and PDF links. Some
   links are stale, blocked, not actual PDFs, or only weakly related to the query.
-- Deduplication is based on deterministic local filenames and chunk ids. It will
-  catch common repeated downloads, but it is not a full DOI/content-hash
-  deduplication system yet.
+- Deduplication now uses local filenames, document content hashes, and chunk
+  fingerprints. It is enough for routine local updates, but DOI-level
+  deduplication across publisher versions is still limited.
 - The index is local and single-user. There is no authentication, background job
   queue, or concurrent write protection.
 
@@ -224,7 +233,7 @@ keeps the setup simple and private, but it also means there are practical limits
 
 Useful next steps, without changing the project into a heavy platform, would be:
 
-- add DOI and file-content hashing for stronger duplicate detection;
+- add DOI-aware duplicate detection across publisher versions and preprints;
 - add OCR for scanned PDFs and better handling of tables or two-column layouts;
 - add a lightweight reranker for the top retrieved passages;
 - add query expansion for synonyms, compound names, and analytical method aliases;
