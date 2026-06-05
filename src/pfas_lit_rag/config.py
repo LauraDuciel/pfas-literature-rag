@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     chunk_size: int = 900
     chunk_overlap: int = 150
     retrieval_k: int = 4
+    lexical_candidate_k: int = 20
+    vector_weight: float = 0.65
+    lexical_weight: float = 0.35
     context_chars_per_chunk: int = 1200
     ollama_num_predict: int = 350
 
