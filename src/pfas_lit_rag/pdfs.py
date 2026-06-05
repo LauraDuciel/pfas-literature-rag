@@ -6,9 +6,16 @@ from pypdf import PdfReader
 from pfas_lit_rag.schemas import DocumentPage
 
 
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def document_id_for_path(path: Path) -> str:
-    digest = hashlib.sha1(str(path.resolve()).encode("utf-8")).hexdigest()
-    return digest[:12]
+    return file_sha256(path)[:12]
 
 
 def read_pdf_pages(path: Path) -> list[DocumentPage]:

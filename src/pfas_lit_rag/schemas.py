@@ -11,6 +11,15 @@ class DocumentPage(BaseModel):
     text: str
 
 
+class DocumentRecord(BaseModel):
+    document_id: str
+    title: str
+    source_path: str
+    file_sha256: str
+    pages_extracted: int
+    chunks_indexed: int
+
+
 class TextChunk(BaseModel):
     chunk_id: str
     document_id: str

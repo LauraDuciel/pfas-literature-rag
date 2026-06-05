@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -55,16 +56,25 @@ class VectorStore:
                 handle.write(chunk.model_dump_json() + "\n")
 
     def existing_chunk_ids(self) -> set[str]:
+        return {chunk.chunk_id for chunk in self.load_chunks_if_available()}
+
+    def existing_chunk_fingerprints(self) -> set[str]:
+        return {chunk_fingerprint(chunk) for chunk in self.load_chunks_if_available()}
+
+    def has_duplicate_fingerprints(self) -> bool:
+        fingerprints = [chunk_fingerprint(chunk) for chunk in self.load_chunks_if_available()]
+        return len(fingerprints) != len(set(fingerprints))
+
+    def load_chunks_if_available(self) -> list[TextChunk]:
         if not self.metadata_path.exists():
-            return set()
-        chunk_ids: set[str] = set()
+            return []
+        chunks = []
         with self.metadata_path.open("r", encoding="utf-8") as handle:
             for line in handle:
                 if not line.strip():
                     continue
-                record = json.loads(line)
-                chunk_ids.add(str(record["chunk_id"]))
-        return chunk_ids
+                chunks.append(TextChunk.model_validate(json.loads(line)))
+        return chunks
 
     def search(self, query_embedding: np.ndarray, top_k: int) -> list[SearchResult]:
         index, chunks = self.load()
@@ -84,9 +94,16 @@ class VectorStore:
                 f"Index not found in {self.index_dir}. Run `pfas-ingest` first."
             )
         index = faiss.read_index(str(self.index_path))
-        chunks = []
-        with self.metadata_path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                record = json.loads(line)
-                chunks.append(TextChunk.model_validate(record))
-        return index, chunks
+        return index, self.load_chunks_if_available()
+
+
+def chunk_fingerprint(chunk: TextChunk) -> str:
+    text_hash = hashlib.sha1(chunk.text.encode("utf-8")).hexdigest()
+    return "|".join(
+        [
+            chunk.source_path,
+            str(chunk.page_start),
+            str(chunk.page_end),
+            text_hash,
+        ]
+    )
