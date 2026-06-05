@@ -9,7 +9,9 @@ The workflow is designed to run on a personal machine:
 - PDFs are stored and indexed locally.
 - Embeddings are computed locally with a small CPU-friendly model.
 - Answer synthesis uses Ollama with `qwen2.5:3b` by default.
+- Retrieval combines local embeddings with a lightweight BM25 lexical score.
 - Retrieved passages keep document and page metadata for source citations.
+- Document manifests include file hashes to support cleaner corpus updates.
 
 ## Setup after cloning
 
@@ -160,6 +162,27 @@ PFAS_RAG_REQUEST_TIMEOUT_SECONDS=900
 The default embedding backend is `fastembed`, using
 `BAAI/bge-small-en-v1.5`.
 
+## Demonstration notebook
+
+A small executed notebook is available at `notebooks/pfas_rag_demo.ipynb`. It
+shows the local corpus state, document manifest, hybrid retrieval results,
+retrieved context, and one Ollama-generated answer with cited sources.
+
+Run it again with:
+
+```bash
+uv run python - <<'PY'
+from pathlib import Path
+import nbformat
+from nbclient import NotebookClient
+
+path = Path("notebooks/pfas_rag_demo.ipynb")
+nb = nbformat.read(path, as_version=4)
+NotebookClient(nb, timeout=1200, kernel_name="python3").execute()
+nbformat.write(nb, path)
+PY
+```
+
 ## Development
 
 Run tests:
@@ -187,8 +210,8 @@ keeps the setup simple and private, but it also means there are practical limits
 - PDF text extraction depends on the PDF structure. Scanned PDFs, tables,
   two-column layouts, chemical notation, and supplementary material may extract
   poorly without OCR or layout-aware parsing.
-- Retrieval is based on dense embeddings and simple top-k ranking. It does not
-  yet use hybrid lexical/vector search, reranking, or query expansion.
+- Retrieval now combines dense embeddings and lexical BM25 scoring, but it does
+  not yet use reranking, query expansion, or domain-specific synonym handling.
 - The OpenAlex collector depends on available open metadata and PDF links. Some
   links are stale, blocked, not actual PDFs, or only weakly related to the query.
 - Deduplication is based on deterministic local filenames and chunk ids. It will
@@ -203,8 +226,8 @@ Useful next steps, without changing the project into a heavy platform, would be:
 
 - add DOI and file-content hashing for stronger duplicate detection;
 - add OCR for scanned PDFs and better handling of tables or two-column layouts;
-- add hybrid retrieval with BM25 plus vector search;
 - add a lightweight reranker for the top retrieved passages;
+- add query expansion for synonyms, compound names, and analytical method aliases;
 - store document-level metadata more explicitly, including DOI, source, license,
   and collection query;
 - add an evaluation notebook with a small set of fixed questions and expected
