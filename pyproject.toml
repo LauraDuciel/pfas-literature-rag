@@ -31,12 +31,16 @@ dev = [
 eval = [
     "mlflow>=2.14.0",
 ]
+langchain = [
+    "langchain-core>=0.3.0",
+]
 
 [project.scripts]
 pfas-collect = "pfas_lit_rag.cli.collect:run"
 pfas-ingest = "pfas_lit_rag.cli.ingest:run"
 pfas-query = "pfas_lit_rag.cli.query:run"
 pfas-evaluate = "pfas_lit_rag.cli.evaluate:run"
+pfas-corpus-report = "pfas_lit_rag.cli.corpus_report:run"
 pfas-api = "pfas_lit_rag.api:run"
 
 [build-system]

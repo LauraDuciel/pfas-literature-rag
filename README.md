@@ -9,7 +9,7 @@ The workflow is designed to run on a personal machine:
 - PDFs are stored and indexed locally.
 - Embeddings are computed locally with a small CPU-friendly model.
 - Answer synthesis uses Ollama with `qwen2.5:3b` by default.
-- Retrieval combines local embeddings with a lightweight BM25 lexical score.
+- Retrieval combines local embeddings, BM25 lexical scoring, and a small reranking step.
 - Retrieved passages keep document and page metadata for source citations.
 - Document manifests include file hashes to support cleaner corpus updates.
 
@@ -55,6 +55,7 @@ For a first local run:
 uv run pfas-collect "PFAS NMR analytical chemistry" --max-results 10 --dry-run
 uv run pfas-collect "PFAS NMR analytical chemistry" --max-results 10
 uv run pfas-ingest
+uv run pfas-corpus-report
 uv run pfas-query "What analytical methods are used for PFAS detection?"
 ```
 
@@ -147,6 +148,16 @@ uv run pfas-ingest
 
 Only new chunks are embedded and added to the existing index.
 
+## Corpus report
+
+Generate a short Markdown summary of the local PDF corpus, document manifest, and indexed chunks:
+
+```bash
+uv run pfas-corpus-report
+```
+
+The default output is `reports/corpus_report.md`. This is useful after several collection and ingestion runs to check corpus size, low-text documents, and duplicate chunk fingerprints.
+
 ## Configuration
 
 Settings can be overridden with environment variables:
@@ -156,6 +167,8 @@ PFAS_RAG_OLLAMA_BASE_URL=http://localhost:11434
 PFAS_RAG_OLLAMA_MODEL=qwen2.5:3b
 PFAS_RAG_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
 PFAS_RAG_RETRIEVAL_K=4
+PFAS_RAG_RERANK_ENABLED=true
+PFAS_RAG_RERANK_WEIGHT=0.25
 PFAS_RAG_CONTEXT_CHARS_PER_CHUNK=1200
 PFAS_RAG_OLLAMA_NUM_PREDICT=350
 PFAS_RAG_REQUEST_TIMEOUT_SECONDS=900
@@ -217,6 +230,16 @@ a Markdown summary to `reports/evaluation_summary.md`, detailed JSON results to
 `reports/evaluation_results.json`, and MLflow runs to `mlruns/` unless
 `--no-mlflow` is passed. See `docs/evaluation.md` for details.
 
+## Optional integrations
+
+The core project does not depend on LangChain. A small adapter is available for experiments that need a LangChain-compatible retriever while still using the existing local FAISS/BM25/Ollama workflow:
+
+```bash
+uv sync --extra langchain
+```
+
+See `docs/integrations.md` for the adapter and possible Hugging Face extension points.
+
 ## Development
 
 Run tests:
@@ -246,8 +269,10 @@ keeps the setup simple and private, but it also means there are practical limits
 - PDF text extraction depends on the PDF structure. Scanned PDFs, tables,
   two-column layouts, chemical notation, and supplementary material may extract
   poorly without OCR or layout-aware parsing.
-- Retrieval now combines dense embeddings and lexical BM25 scoring, but it does
-  not yet use reranking, query expansion, or domain-specific synonym handling.
+- Retrieval combines dense embeddings, lexical BM25 scoring, and a lightweight
+  query-overlap reranker. This is still simpler than a trained cross-encoder
+  reranker and does not yet include query expansion or domain-specific synonym
+  handling.
 - The OpenAlex collector depends on available open metadata and PDF links. Some
   links are stale, blocked, not actual PDFs, or only weakly related to the query.
 - Deduplication now uses local filenames, document content hashes, and chunk
@@ -262,14 +287,17 @@ Useful next steps, without changing the project into a heavy platform, would be:
 
 - add DOI-aware duplicate detection across publisher versions and preprints;
 - add OCR for scanned PDFs and better handling of tables or two-column layouts;
-- add a lightweight reranker for the top retrieved passages;
+- evaluate a stronger optional reranker on top retrieved passages, such as a
+  compact cross-encoder when local hardware allows it;
 - add query expansion for synonyms, compound names, and analytical method aliases;
 - store document-level metadata more explicitly, including DOI, source, license,
   and collection query;
 - expand the evaluation set with more fixed questions and expected cited passages;
 - expose separate retrieval-only and answer-generation timings in the CLI/API;
 - support swapping between `qwen2.5:3b` and a larger local model when hardware
-  allows it.
+  allows it;
+- test Hugging Face models as optional local alternatives for embeddings or
+  reranking, without making them required for the baseline workflow.
 
 ## Scope
 
