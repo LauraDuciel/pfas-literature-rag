@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     lexical_candidate_k: int = 20
     vector_weight: float = 0.65
     lexical_weight: float = 0.35
+    rerank_enabled: bool = True
+    rerank_weight: float = 0.25
     context_chars_per_chunk: int = 1200
     ollama_num_predict: int = 350
 

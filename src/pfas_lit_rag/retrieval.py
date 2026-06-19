@@ -1,6 +1,7 @@
 from pfas_lit_rag.config import Settings
 from pfas_lit_rag.embeddings import get_embedding_model
 from pfas_lit_rag.lexical_search import BM25Index
+from pfas_lit_rag.reranking import rerank_results
 from pfas_lit_rag.schemas import SearchResult
 from pfas_lit_rag.vector_store import VectorStore
 
@@ -15,13 +16,21 @@ def search_index(query: str, settings: Settings, top_k: int | None = None) -> li
     vector_results = store.search(query_embedding, max(k, settings.lexical_candidate_k))
     lexical_results = BM25Index(chunks).search(query, max(k, settings.lexical_candidate_k))
 
-    return _fuse_results(
+    candidates = _fuse_results(
         vector_results=vector_results,
         lexical_results=lexical_results,
-        top_k=k,
+        top_k=max(k, settings.lexical_candidate_k),
         vector_weight=settings.vector_weight,
         lexical_weight=settings.lexical_weight,
     )
+    if settings.rerank_enabled:
+        return rerank_results(
+            query,
+            candidates,
+            top_k=k,
+            rerank_weight=settings.rerank_weight,
+        )
+    return candidates[:k]
 
 
 def _fuse_results(

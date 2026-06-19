@@ -12,6 +12,7 @@ from pfas_lit_rag.evaluation import (
     has_citation_coverage,
     is_unsupported_answer,
     load_evaluation_cases,
+    mlflow_params,
     recall_at_k,
     render_markdown_report,
 )
@@ -127,3 +128,20 @@ def test_render_markdown_report_contains_metrics() -> None:
 
     assert 'Recall@4: 1.000' in markdown
     assert 'methods' in markdown
+
+
+def test_mlflow_params_include_retrieval_configuration(tmp_path) -> None:
+    settings = Settings(
+        project_root=tmp_path,
+        vector_weight=0.6,
+        lexical_weight=0.4,
+        rerank_enabled=True,
+        rerank_weight=0.2,
+    )
+
+    params = mlflow_params(settings, top_k=5, generate_answers=False)
+
+    assert params["vector_weight"] == 0.6
+    assert params["lexical_weight"] == 0.4
+    assert params["rerank_enabled"] is True
+    assert params["rerank_weight"] == 0.2
