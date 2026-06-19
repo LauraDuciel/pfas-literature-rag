@@ -13,3 +13,7 @@ data/metadata/*
 
 .env
 *.log
+
+mlruns/
+reports/*.json
+!reports/evaluation_summary.md

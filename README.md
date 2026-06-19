@@ -190,6 +190,33 @@ nbformat.write(nb, path)
 PY
 ```
 
+## Evaluation
+
+A lightweight evaluation workflow is available for checking retrieval behavior
+and citation coverage on a small versioned question set. Install the optional
+evaluation dependencies when MLflow tracking is needed:
+
+```bash
+uv sync --extra dev --extra eval
+```
+
+Run a fast retrieval-only evaluation:
+
+```bash
+uv run pfas-evaluate --retrieval-only
+```
+
+Run retrieval plus local Ollama answer generation:
+
+```bash
+uv run pfas-evaluate
+```
+
+The default evaluation set is `data/eval/pfas_questions.yaml`. The command writes
+a Markdown summary to `reports/evaluation_summary.md`, detailed JSON results to
+`reports/evaluation_results.json`, and MLflow runs to `mlruns/` unless
+`--no-mlflow` is passed. See `docs/evaluation.md` for details.
+
 ## Development
 
 Run tests:
@@ -239,8 +266,7 @@ Useful next steps, without changing the project into a heavy platform, would be:
 - add query expansion for synonyms, compound names, and analytical method aliases;
 - store document-level metadata more explicitly, including DOI, source, license,
   and collection query;
-- add an evaluation notebook with a small set of fixed questions and expected
-  cited passages;
+- expand the evaluation set with more fixed questions and expected cited passages;
 - expose separate retrieval-only and answer-generation timings in the CLI/API;
 - support swapping between `qwen2.5:3b` and a larger local model when hardware
   allows it.

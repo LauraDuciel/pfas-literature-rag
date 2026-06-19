@@ -1,0 +1,26 @@
+- id: pfas_detection_methods
+  question: "What analytical methods are used for PFAS detection?"
+  expected_sources:
+    - title_contains: "environmental analysis"
+    - title_contains: "extraction methods"
+  expected_answer_terms:
+    - "mass spectrometry"
+    - "extraction"
+
+- id: pfas_extraction_methods
+  question: "Which extraction approaches are discussed for PFAS analysis?"
+  expected_sources:
+    - title_contains: "extraction methods"
+    - title_contains: "extraction methodologies"
+  expected_answer_terms:
+    - "SPE"
+    - "extraction"
+
+- id: pfas_non_target_screening
+  question: "How is suspect or non-target screening used in PFAS studies?"
+  expected_sources:
+    - title_contains: "environmental analysis"
+    - title_contains: "suspect"
+  expected_answer_terms:
+    - "suspect"
+    - "screening"
