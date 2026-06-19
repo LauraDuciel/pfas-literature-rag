@@ -203,6 +203,33 @@ nbformat.write(nb, path)
 PY
 ```
 
+## End-to-end check
+
+A practical check after setup is to collect a small batch of open PDFs, update
+the index, ask a question, and inspect the retrieved passages behind the answer:
+
+```bash
+uv run pfas-collect "PFAS extraction methods analysis open access" --max-results 8
+uv run pfas-ingest
+uv run pfas-query "What extraction and analytical methods are used for PFAS detection in environmental samples?" --top-k 5
+```
+
+A successful run should show whether PDFs were newly downloaded or already
+present, then report how many new chunks were indexed. The answer should include
+a `Sources:` section with document titles and page numbers. For a stricter
+check, inspect the retrieved context directly:
+
+```bash
+uv run python -c "from pfas_lit_rag.config import get_settings; from pfas_lit_rag.retrieval import search_index, format_context; q='What extraction and analytical methods are used for PFAS detection in environmental samples?'; s=get_settings(); print(format_context(search_index(q, s, top_k=5), max_chars_per_chunk=1800))"
+```
+
+The cited passages should support the main analytical claims. In recent local
+testing, the retrieved evidence supported methods such as LC-MS/MS, GC-MS, HRMS,
+TOF-MS, FTICR-MS, Orbitrap instrumentation, liquid-liquid extraction, solid-phase
+extraction, and accelerated solvent extraction. The generated answer still needs
+scientific review, especially because small local models can blur the distinction
+between analytical methods, extraction procedures, and PFAS compound classes.
+
 ## Evaluation
 
 A lightweight evaluation workflow is available for checking retrieval behavior
