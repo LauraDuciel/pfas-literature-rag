@@ -63,3 +63,37 @@ def test_download_records_skips_existing_pdf(monkeypatch, tmp_path: Path) -> Non
     assert len(result.existing) == 1
     assert result.existing[0].downloaded_path == str(existing_pdf)
     assert result.failed == []
+
+
+def test_download_records_writes_enriched_manifest(monkeypatch, tmp_path: Path) -> None:
+    settings = DummySettings()
+    settings.resolved_raw_pdf_dir = tmp_path / "pdfs"
+    settings.resolved_metadata_dir = tmp_path / "metadata"
+
+    def fake_get(*args, **kwargs):
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/pdf"},
+            content=b"%PDF content",
+            request=httpx.Request("GET", "https://example.org/paper.pdf"),
+        )
+
+    monkeypatch.setattr(httpx.Client, "get", fake_get)
+    record = LiteratureRecord(
+        title="PFAS paper",
+        source="openalex",
+        doi="10.1234/example",
+        openalex_id="https://openalex.org/W123",
+        journal="Analytical Methods",
+        authors=["A. Chemist"],
+        concepts=["Mass spectrometry"],
+        pdf_url="https://example.org/paper.pdf",
+    )
+
+    result = download_records([record], settings)  # type: ignore[arg-type]
+    manifest_text = (settings.resolved_metadata_dir / "literature_manifest.jsonl").read_text()
+
+    assert len(result.downloaded) == 1
+    assert '"openalex_id": "https://openalex.org/W123"' in manifest_text
+    assert '"journal": "Analytical Methods"' in manifest_text
+    assert '"authors": ["A. Chemist"]' in manifest_text

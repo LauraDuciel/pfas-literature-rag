@@ -252,7 +252,14 @@ def render_markdown_report(
         f'- Embedding model: `{settings.embedding_model}`',
         f'- top_k: {summary.top_k}',
         f'- Vector/BM25 weights: {settings.vector_weight:.2f} / {settings.lexical_weight:.2f}',
-        f'- Reranking: {settings.rerank_enabled} (weight={settings.rerank_weight:.2f})',
+        (
+            f'- Reranking: {settings.rerank_enabled} '
+            f'(backend={settings.rerank_backend}, weight={settings.rerank_weight:.2f})'
+        ),
+    ]
+    if settings.rerank_backend in {'auto', 'cross_encoder'}:
+        lines.append(f'- Cross-encoder model: `{settings.cross_encoder_model}`')
+    lines.extend([
         '',
         '## Metrics',
         '',
@@ -264,7 +271,7 @@ def render_markdown_report(
         '',
         '## Cases',
         '',
-    ]
+    ])
     for case_result in result.cases:
         lines.extend(
             [
@@ -306,7 +313,11 @@ def mlflow_params(settings: Settings, *, top_k: int, generate_answers: bool) -> 
         'vector_weight': settings.vector_weight,
         'lexical_weight': settings.lexical_weight,
         'rerank_enabled': settings.rerank_enabled,
+        'rerank_backend': settings.rerank_backend,
         'rerank_weight': settings.rerank_weight,
+        'cross_encoder_model': settings.cross_encoder_model,
+        'cross_encoder_candidate_k': settings.cross_encoder_candidate_k,
+        'cross_encoder_batch_size': settings.cross_encoder_batch_size,
         'context_chars_per_chunk': settings.context_chars_per_chunk,
         'ollama_num_predict': settings.ollama_num_predict,
         'generate_answers': generate_answers,

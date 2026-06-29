@@ -13,13 +13,14 @@ def search_index(query: str, settings: Settings, top_k: int | None = None) -> li
 
     model = get_embedding_model(settings.embedding_model)
     query_embedding = model.encode([query])
-    vector_results = store.search(query_embedding, max(k, settings.lexical_candidate_k))
-    lexical_results = BM25Index(chunks).search(query, max(k, settings.lexical_candidate_k))
+    candidate_k = max(k, settings.lexical_candidate_k, settings.cross_encoder_candidate_k)
+    vector_results = store.search(query_embedding, candidate_k)
+    lexical_results = BM25Index(chunks).search(query, candidate_k)
 
     candidates = _fuse_results(
         vector_results=vector_results,
         lexical_results=lexical_results,
-        top_k=max(k, settings.lexical_candidate_k),
+        top_k=candidate_k,
         vector_weight=settings.vector_weight,
         lexical_weight=settings.lexical_weight,
     )
@@ -29,6 +30,9 @@ def search_index(query: str, settings: Settings, top_k: int | None = None) -> li
             candidates,
             top_k=k,
             rerank_weight=settings.rerank_weight,
+            backend=settings.rerank_backend,
+            cross_encoder_model=settings.cross_encoder_model,
+            cross_encoder_batch_size=settings.cross_encoder_batch_size,
         )
     return candidates[:k]
 

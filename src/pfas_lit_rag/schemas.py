@@ -71,6 +71,17 @@ class LiteratureRecord(BaseModel):
     pdf_url: HttpUrl
     landing_url: HttpUrl | None = None
     doi: str | None = None
+    openalex_id: str | None = None
     publication_year: int | None = None
+    publication_date: str | None = None
+    journal: str | None = None
+    publisher: str | None = None
+    cited_by_count: int | None = None
+    work_type: str | None = None
+    is_open_access: bool | None = None
+    open_access_status: str | None = None
+    open_access_version: str | None = None
     license: str | None = None
+    authors: list[str] = Field(default_factory=list)
+    concepts: list[str] = Field(default_factory=list)
     downloaded_path: str | None = None

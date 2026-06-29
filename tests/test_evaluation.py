@@ -136,7 +136,11 @@ def test_mlflow_params_include_retrieval_configuration(tmp_path) -> None:
         vector_weight=0.6,
         lexical_weight=0.4,
         rerank_enabled=True,
+        rerank_backend='cross_encoder',
         rerank_weight=0.2,
+        cross_encoder_model='cross-encoder/ms-marco-MiniLM-L-6-v2',
+        cross_encoder_candidate_k=12,
+        cross_encoder_batch_size=4,
     )
 
     params = mlflow_params(settings, top_k=5, generate_answers=False)
@@ -144,4 +148,8 @@ def test_mlflow_params_include_retrieval_configuration(tmp_path) -> None:
     assert params["vector_weight"] == 0.6
     assert params["lexical_weight"] == 0.4
     assert params["rerank_enabled"] is True
+    assert params["rerank_backend"] == "cross_encoder"
     assert params["rerank_weight"] == 0.2
+    assert params["cross_encoder_model"] == "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    assert params["cross_encoder_candidate_k"] == 12
+    assert params["cross_encoder_batch_size"] == 4

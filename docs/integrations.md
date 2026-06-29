@@ -25,7 +25,28 @@ documents = retriever.invoke("PFAS extraction methods")
 
 The adapter calls the existing `search_index` function and returns LangChain
 `Document` objects with the same citation and page metadata used by the rest of
-the project. It does not introduce agents, chains, or a second retrieval stack.
+the project. It does not add chains or a second retrieval stack.
+
+## Cross-encoder reranking
+
+The retrieval pipeline can use a local cross-encoder reranker after the initial
+FAISS/BM25 candidate search. The default configuration uses `lexical`, which
+keeps the baseline fast and fully reproducible on small machines.
+
+Relevant settings:
+
+```bash
+PFAS_RAG_RERANK_BACKEND=lexical
+PFAS_RAG_CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+PFAS_RAG_CROSS_ENCODER_CANDIDATE_K=20
+PFAS_RAG_CROSS_ENCODER_BATCH_SIZE=8
+```
+
+Use `PFAS_RAG_RERANK_BACKEND=cross_encoder` only after installing
+`sentence-transformers` in the local environment. On small machines, prefer a
+CPU-only PyTorch installation and keep the candidate count modest. The model
+`cross-encoder/ms-marco-MiniLM-L-6-v2` is generic rather than chemistry-specific,
+so its value should be checked with `pfas-evaluate` before relying on it.
 
 ## Hugging Face candidates
 

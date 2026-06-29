@@ -80,14 +80,27 @@ def _record_from_openalex(work: dict[str, Any]) -> LiteratureRecord | None:
         or work.get("doi")
         or work.get("id")
     )
+    source = primary_location.get("source") or best_location.get("source") or {}
+    open_access = work.get("open_access") or {}
     return LiteratureRecord(
         title=work.get("title") or "Untitled",
         source="openalex",
         pdf_url=pdf_url,
         landing_url=landing_url,
-        doi=_normalise_doi(work.get("doi")),
+        doi=_normalise_doi(work.get("doi") or (work.get("ids") or {}).get("doi")),
+        openalex_id=work.get("id"),
         publication_year=work.get("publication_year"),
+        publication_date=work.get("publication_date"),
+        journal=source.get("display_name"),
+        publisher=source.get("host_organization_name") or source.get("publisher"),
+        cited_by_count=work.get("cited_by_count"),
+        work_type=work.get("type"),
+        is_open_access=open_access.get("is_oa"),
+        open_access_status=open_access.get("oa_status"),
+        open_access_version=best_location.get("version") or primary_location.get("version"),
         license=best_location.get("license") or primary_location.get("license"),
+        authors=_author_names(work),
+        concepts=_concept_names(work),
     )
 
 
@@ -142,6 +155,31 @@ def _best_pdf_url(work: dict[str, Any]) -> str | None:
         if location.get("pdf_url"):
             return location["pdf_url"]
     return None
+
+
+def _author_names(work: dict[str, Any], *, limit: int = 8) -> list[str]:
+    names: list[str] = []
+    for authorship in work.get("authorships") or []:
+        author = authorship.get("author") or {}
+        name = author.get("display_name")
+        if name:
+            names.append(name)
+        if len(names) >= limit:
+            break
+    return names
+
+
+def _concept_names(work: dict[str, Any], *, limit: int = 8) -> list[str]:
+    concepts = sorted(
+        work.get("concepts") or [],
+        key=lambda item: item.get("score") or 0.0,
+        reverse=True,
+    )
+    return [
+        concept["display_name"]
+        for concept in concepts[:limit]
+        if concept.get("display_name")
+    ]
 
 
 def _normalise_doi(doi: str | None) -> str | None:

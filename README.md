@@ -124,7 +124,9 @@ curl -X POST http://127.0.0.1:8000/answer \
 ## Collect open PDFs
 
 The collector searches open scholarly metadata and downloads PDF links exposed
-by those records. It writes a manifest to `data/metadata/literature_manifest.jsonl`.
+by those records. It writes a manifest to `data/metadata/literature_manifest.jsonl`
+with DOI, OpenAlex, journal, publisher, author, concept, and open-access metadata
+when available.
 If a matching PDF file already exists locally, it is counted as already present
 and is not downloaded again.
 
@@ -168,7 +170,11 @@ PFAS_RAG_OLLAMA_MODEL=qwen2.5:3b
 PFAS_RAG_EMBEDDING_MODEL=BAAI/bge-small-en-v1.5
 PFAS_RAG_RETRIEVAL_K=4
 PFAS_RAG_RERANK_ENABLED=true
+PFAS_RAG_RERANK_BACKEND=lexical
 PFAS_RAG_RERANK_WEIGHT=0.25
+PFAS_RAG_CROSS_ENCODER_MODEL=cross-encoder/ms-marco-MiniLM-L-6-v2
+PFAS_RAG_CROSS_ENCODER_CANDIDATE_K=20
+PFAS_RAG_CROSS_ENCODER_BATCH_SIZE=8
 PFAS_RAG_CONTEXT_CHARS_PER_CHUNK=1200
 PFAS_RAG_OLLAMA_NUM_PREDICT=350
 PFAS_RAG_REQUEST_TIMEOUT_SECONDS=900
@@ -265,7 +271,7 @@ The core project does not depend on LangChain. A small adapter is available for 
 uv sync --extra langchain
 ```
 
-See `docs/integrations.md` for the adapter and possible Hugging Face extension points.
+See `docs/integrations.md` for the adapter, cross-encoder reranking notes, and possible Hugging Face extension points.
 
 ## Development
 
@@ -296,10 +302,12 @@ keeps the setup simple and private, but it also means there are practical limits
 - PDF text extraction depends on the PDF structure. Scanned PDFs, tables,
   two-column layouts, chemical notation, and supplementary material may extract
   poorly without OCR or layout-aware parsing.
-- Retrieval combines dense embeddings, lexical BM25 scoring, and a lightweight
-  query-overlap reranker. This is still simpler than a trained cross-encoder
-  reranker and does not yet include query expansion or domain-specific synonym
-  handling.
+- Retrieval combines dense embeddings, lexical BM25 scoring, and reranking.
+  The default fallback is a lightweight query-overlap reranker. A local
+  cross-encoder reranker can be used when `sentence-transformers` is installed,
+  but it is intentionally not a required dependency because it can pull in a
+  heavier PyTorch stack. Query expansion and domain-specific synonym handling
+  are still out of scope.
 - The OpenAlex collector depends on available open metadata and PDF links. Some
   links are stale, blocked, not actual PDFs, or only weakly related to the query.
 - Deduplication now uses local filenames, document content hashes, and chunk
@@ -314,8 +322,8 @@ Useful next steps, without changing the project into a heavy platform, would be:
 
 - add DOI-aware duplicate detection across publisher versions and preprints;
 - add OCR for scanned PDFs and better handling of tables or two-column layouts;
-- evaluate a stronger optional reranker on top retrieved passages, such as a
-  compact cross-encoder when local hardware allows it;
+- compare the optional cross-encoder reranker against the lexical fallback on
+  the versioned evaluation questions;
 - add query expansion for synonyms, compound names, and analytical method aliases;
 - store document-level metadata more explicitly, including DOI, source, license,
   and collection query;

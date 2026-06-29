@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     lexical_weight: float = 0.35
     rerank_enabled: bool = True
     rerank_weight: float = 0.25
+    rerank_backend: str = "lexical"
+    cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    cross_encoder_candidate_k: int = 20
+    cross_encoder_batch_size: int = 8
     context_chars_per_chunk: int = 1200
     ollama_num_predict: int = 350
 
