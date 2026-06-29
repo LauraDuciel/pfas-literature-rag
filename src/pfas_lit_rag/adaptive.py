@@ -100,18 +100,26 @@ def choose_retrieval_strategy(question: str, *, default_top_k: int = 4) -> Retri
     )
 
 
+def retrieve_adaptive(
+    question: str,
+    settings: Settings,
+    top_k: int | None = None,
+) -> tuple[RetrievalDecision, list[SearchResult], int, float]:
+    decision = choose_retrieval_strategy(question, default_top_k=top_k or settings.retrieval_k)
+    if decision.mode == RetrievalMode.LLM_ONLY:
+        return decision, [], 0, 0.0
+    retrieval_started = time.perf_counter()
+    retrieved = _retrieve_for_decision(question, settings=settings, decision=decision)
+    return decision, retrieved, decision.searches_planned, time.perf_counter() - retrieval_started
+
+
 def answer_adaptive(question: str, settings: Settings, top_k: int | None = None) -> AdaptiveAnswer:
     started = time.perf_counter()
-    decision = choose_retrieval_strategy(question, default_top_k=top_k or settings.retrieval_k)
-    retrieved: list[SearchResult] = []
-    retrieval_seconds = 0.0
-    searches_run = 0
-
-    if decision.mode != RetrievalMode.LLM_ONLY:
-        retrieval_started = time.perf_counter()
-        retrieved = _retrieve_for_decision(question, settings=settings, decision=decision)
-        retrieval_seconds = time.perf_counter() - retrieval_started
-        searches_run = decision.searches_planned
+    decision, retrieved, searches_run, retrieval_seconds = retrieve_adaptive(
+        question,
+        settings=settings,
+        top_k=top_k,
+    )
 
     generation_started = time.perf_counter()
     if decision.mode == RetrievalMode.LLM_ONLY:

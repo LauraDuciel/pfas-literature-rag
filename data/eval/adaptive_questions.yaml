@@ -1,0 +1,42 @@
+- id: pfas_general_background
+  question: What are PFAS?
+  category: general_known
+  expected_strategy: llm_only
+  expected_answer_terms:
+    - persistent
+    - fluorinated
+
+- id: pfas_detection_exact_method
+  question: How is LC-MS/MS used for PFAS detection?
+  category: exact_term
+  expected_strategy: hybrid
+  expected_sources:
+    - title_contains: environmental analysis
+  expected_answer_terms:
+    - LC-MS/MS
+
+- id: pfas_extraction_multi_document
+  question: Compare extraction methods across PFAS analytical studies.
+  category: multi_document
+  expected_strategy: hybrid_retry
+  expected_sources:
+    - title_contains: extraction
+    - title_contains: environmental analysis
+  expected_answer_terms:
+    - extraction
+
+- id: pfas_corpus_specific
+  question: Which methods are discussed for extractable organic fluorine in PFAS studies?
+  category: in_corpus_specific
+  expected_strategy: hybrid
+  expected_sources:
+    - title_contains: extractable organic fluorine
+  expected_answer_terms:
+    - EOF
+
+- id: pfas_out_of_corpus
+  question: What is the current market size for PFAS remediation startups?
+  category: out_of_corpus
+  expected_strategy: hybrid
+  expected_answer_terms:
+    - evidence
