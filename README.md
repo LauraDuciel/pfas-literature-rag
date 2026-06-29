@@ -263,6 +263,46 @@ a Markdown summary to `reports/evaluation_summary.md`, detailed JSON results to
 `reports/evaluation_results.json`, and MLflow runs to `mlruns/` unless
 `--no-mlflow` is passed. See `docs/evaluation.md` for details.
 
+
+## Adaptive retrieval comparison
+
+The project includes a local comparison workflow for checking when retrieval is
+useful, noisy, or unnecessary. It compares three modes on the same local corpus:
+
+- `llm_only`: local Ollama answer without retrieved context;
+- `rag_fixed`: current hybrid retrieval for every question;
+- `rag_adaptive`: a small retrieval policy that can skip retrieval, choose BM25,
+  use hybrid retrieval, or retry a broader search for multi-document questions.
+
+Run a fast retrieval-only comparison:
+
+```bash
+uv run pfas-compare --retrieval-only --no-mlflow
+```
+
+Run the full comparison with local answer generation:
+
+```bash
+uv run --extra eval pfas-compare --no-mlflow
+```
+
+The default cases are in `data/eval/adaptive_questions.yaml`. The command writes
+`reports/adaptive_comparison.md` and a detailed JSON file ignored by git.
+
+## Answer auditing
+
+A local audit command checks whether factual claims in an answer are supported by
+retrieved passages from the local corpus. It is a review aid, not a truth judge.
+
+```bash
+uv run pfas-audit "What methods are used for PFAS detection?" \
+  --answer "LC-MS/MS is used for PFAS detection in environmental samples."
+```
+
+For longer answers, write the answer to a text file and pass `--answer-file`. The
+command writes a structured JSON report and a local HTML report under `reports/`;
+both generated files are ignored by git. See `docs/auditing.md` for details.
+
 ## Optional integrations
 
 The core project does not depend on LangChain. A small adapter is available for experiments that need a LangChain-compatible retriever while still using the existing local FAISS/BM25/Ollama workflow:

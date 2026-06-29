@@ -42,3 +42,17 @@ Current metrics:
 
 These metrics are lightweight checks of retrieval and citation behavior. They are
 not a substitute for scientific review of the cited documents.
+
+## Adaptive comparison
+
+The adaptive comparison workflow uses `data/eval/adaptive_questions.yaml` to
+compare three local modes: no retrieval, fixed hybrid retrieval, and adaptive
+retrieval.
+
+```bash
+uv run pfas-compare --retrieval-only --no-mlflow
+```
+
+The report is written to `reports/adaptive_comparison.md`. Detailed JSON output
+is ignored by git. Use the full command without `--retrieval-only` when answer
+generation metrics are needed and local runtime is acceptable.
