@@ -16,4 +16,5 @@ data/metadata/*
 
 mlruns/
 reports/*.json
+reports/*.html
 !reports/evaluation_summary.md
