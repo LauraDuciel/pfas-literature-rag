@@ -5,26 +5,58 @@ from pfas_lit_rag.reranking import rerank_results
 from pfas_lit_rag.schemas import SearchResult
 from pfas_lit_rag.vector_store import VectorStore
 
+BM25_STRATEGY = "bm25"
+VECTOR_STRATEGY = "vector"
+HYBRID_STRATEGY = "hybrid"
+
 
 def search_index(query: str, settings: Settings, top_k: int | None = None) -> list[SearchResult]:
+    return search_index_with_strategy(
+        query,
+        settings=settings,
+        top_k=top_k,
+        strategy=HYBRID_STRATEGY,
+        rerank=settings.rerank_enabled,
+    )
+
+
+def search_index_with_strategy(
+    query: str,
+    *,
+    settings: Settings,
+    top_k: int | None = None,
+    strategy: str = HYBRID_STRATEGY,
+    rerank: bool | None = None,
+) -> list[SearchResult]:
     k = top_k or settings.retrieval_k
+    candidate_k = max(k, settings.lexical_candidate_k, settings.cross_encoder_candidate_k)
     store = VectorStore(settings.resolved_index_dir)
     _, chunks = store.load()
 
-    model = get_embedding_model(settings.embedding_model)
-    query_embedding = model.encode([query])
-    candidate_k = max(k, settings.lexical_candidate_k, settings.cross_encoder_candidate_k)
-    vector_results = store.search(query_embedding, candidate_k)
-    lexical_results = BM25Index(chunks).search(query, candidate_k)
+    selected_strategy = strategy.lower().strip()
+    if selected_strategy == BM25_STRATEGY:
+        candidates = BM25Index(chunks).search(query, candidate_k)
+    elif selected_strategy == VECTOR_STRATEGY:
+        model = get_embedding_model(settings.embedding_model)
+        query_embedding = model.encode([query])
+        candidates = store.search(query_embedding, candidate_k)
+    elif selected_strategy == HYBRID_STRATEGY:
+        model = get_embedding_model(settings.embedding_model)
+        query_embedding = model.encode([query])
+        vector_results = store.search(query_embedding, candidate_k)
+        lexical_results = BM25Index(chunks).search(query, candidate_k)
+        candidates = _fuse_results(
+            vector_results=vector_results,
+            lexical_results=lexical_results,
+            top_k=candidate_k,
+            vector_weight=settings.vector_weight,
+            lexical_weight=settings.lexical_weight,
+        )
+    else:
+        raise ValueError(f"Unsupported retrieval strategy: {strategy}")
 
-    candidates = _fuse_results(
-        vector_results=vector_results,
-        lexical_results=lexical_results,
-        top_k=candidate_k,
-        vector_weight=settings.vector_weight,
-        lexical_weight=settings.lexical_weight,
-    )
-    if settings.rerank_enabled:
+    should_rerank = settings.rerank_enabled if rerank is None else rerank
+    if should_rerank and selected_strategy in {BM25_STRATEGY, VECTOR_STRATEGY, HYBRID_STRATEGY}:
         return rerank_results(
             query,
             candidates,

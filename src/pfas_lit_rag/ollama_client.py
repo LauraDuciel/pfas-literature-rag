@@ -21,6 +21,13 @@ class OllamaClient:
     def answer(self, question: str, results: list[SearchResult]) -> str:
         context = format_context(results, self.settings.context_chars_per_chunk)
         prompt = _build_prompt(question=question, context=context)
+        return self._generate(prompt)
+
+    def answer_without_context(self, question: str) -> str:
+        prompt = _build_general_prompt(question)
+        return self._generate(prompt)
+
+    def _generate(self, prompt: str) -> str:
         response = self.client.post(
             "/api/generate",
             json={
@@ -38,6 +45,16 @@ class OllamaClient:
         response.raise_for_status()
         payload = response.json()
         return str(payload.get("response", "")).strip()
+
+
+def _build_general_prompt(question: str) -> str:
+    return f"""Answer the scientific question concisely from general knowledge.
+If the question asks for specific evidence from the local document corpus, say that
+local retrieval is needed to verify it. Do not invent document citations.
+
+Question: {question}
+
+Answer:"""
 
 
 def _build_prompt(question: str, context: str) -> str:
